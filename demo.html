@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillYatra - Freelance Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC; /* Light blue-gray background */
+            color: #0F172A; /* Dark blue/black text */
+        }
+        /* Define custom colors from the screenshots */
+        .sk-dark-blue {
+            background-color: #0F172A; /* Used for buttons, footer */
+        }
+        .sk-dark-blue-text {
+            color: #0F172A;
+        }
+        .sk-light-bg {
+            background-color: #F8FAFC;
+        }
+        .sk-purple-gradient {
+            background-image: linear-gradient(to right, #6D28D9, #8B5CF6);
+        }
+        .sk-badge {
+            background-color: #FEE2E2;
+            color: #EF4444;
+        }
+        .sk-icon-bg-blue { background-color: #EFF6FF; color: #3B82F6; }
+        .sk-icon-bg-green { background-color: #ECFDF5; color: #10B981; }
+        .sk-icon-bg-yellow { background-color: #FFFBEB; color: #F59E0B; }
+        .sk-icon-bg-red { background-color: #FEF2F2; color: #EF4444; }
+
+        /* Page Navigation Logic */
+        .page {
+            display: none; /* Hide all pages by default */
+        }
+        .page.active {
+            display: block; /* Show only the active page */
+        }
+
+        /* Classes to show/hide based on auth state */
+        .logged-in { display: none; }
+        .logged-out { display: block; }
+
+        body.is-authenticated .logged-in { display: block; }
+        body.is-authenticated .logged-out { display: none; }
+        
+        /* Make flex items visible for auth state */
+        body.is-authenticated .logged-in-flex { display: flex; }
+        body.is-authenticated .logged-out-flex { display: none; }
+        .logged-in-flex { display: none; }
+        .logged-out-flex { display: flex; }
+
+        /* Custom radio button styles for signup & apply */
+        .sk-radio-label {
+            border: 1px solid #E2E8F0;
+            transition: all 0.2s;
+        }
+        .sk-radio-input:checked + .sk-radio-label {
+            border-color: #4F46E5; /* Indigo-600 */
+            box-shadow: 0 0 0 2px #C7D2FE; /* Indigo-200 */
+        }
+        .sk-radio-input:checked + .sk-radio-label .sk-radio-circle {
+            border-color: #4F46E5;
+        }
+        .sk-radio-input:checked + .sk-radio-label .sk-radio-circle::after {
+            transform: scale(1);
+        }
+        .sk-radio-circle {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #CBD5E1;
+            border-radius: 50%;
+            position: relative;
+        }
+        .sk-radio-circle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background-color: #4F46E5;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.2s;
+        }
+
+        /* AI Chat Button Style */
+        #ai-chat-button {
+            position: fixed;
+            bottom: 1.25rem; /* 20px */
+            right: 1.25rem; /* 20px */
+            z-index: 50;
+            background-color: #4F46E5; /* Indigo-600 */
+            color: white;
+            width: 4rem; /* 64px */
+            height: 4rem; /* 64px */
+            border-radius: 9999px; /* full */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        #ai-chat-button:hover {
+            background-color: #4338CA; /* Indigo-700 */
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Progress Bar */
+        .progress-bar-bg {
+            background-color: #E5E7EB; /* gray-200 */
+            border-radius: 9999px;
+            height: 0.75rem; /* 12px */
+            overflow: hidden;
+        }
+        .progress-bar-fg {
+            background-color: #4F46E5; /* indigo-600 */
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Global Error Toast -->
+    <div id="error-toast" class="hidden fixed top-5 right-5 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg" role="alert">
+        <strong class="font-bold">Error:</strong>
+        <span class="block sm:inline" id="error-message"></span>
+    </div>
+    
+    <!-- Global Success Toast -->
+    <div id="success-toast" class="hidden fixed top-5 right-5 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg" role="alert">
+        <strong class="font-bold">Success:</strong>
+        <span class="block sm:inline" id="success-message"></span>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="app">
+
+        <!-- 
+          ======================================================================
+          PAGE 1: LANDING PAGE
+          Based on screenshots: 133451, 133602, 133519, 133623, 133658
+          ======================================================================
+        -->
+        <div id="page-landing" class="page active">
+            
+            <!-- Landing Page Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-50">
+                <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <div class="flex items-center gap-2 cursor-pointer" data-page="page-landing">
+                        <i data-lucide="briefcase" class="text-indigo-600"></i>
+                        <span class="font-bold text-xl sk-dark-blue-text">SkillYatra</span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-6">
+                        <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="page-dashboard-feed">Find Jobs</a>
+                        <a href="#" class="text-gray-600 hover:text-indigo-600" data-page="page-dashboard-feed">Find Freelancers</a>
+                        <a href="#how-it-works" class="text-gray-600 hover:text-indigo-600">How It Works</a>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Logged Out -->
+                        <button class="text-gray-600 hover:text-indigo-600 logged-out" data-page="page-login">
+                            Sign In
+                        </button>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-lg logged-out" data-page="page-signup">
+                            Sign Up
+                        </button>
+                        <!-- Logged In -->
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-lg logged-in" data-page="page-dashboard-feed">
+                            My Dashboard
+                        </button>
+                        <button class="text-gray-600 hover:text-indigo-600 logged-in" id="sign-out-1">
+                            Sign Out
+                        </button>
+                    </div>
+                </nav>
+            </header>
+
+            <!-- Main Content -->
+            <main>
+                <!-- Hero Section (from 133451) -->
+                <section class="bg-white py-24 sm:py-32">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <h1 class="text-4xl md:text-6xl font-bold sk-dark-blue-text max-w-4xl mx-auto leading-tight">
+                            Hire top talent or get hired effortlessly
+                        </h1>
+                        <p class="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
+                            A human-centered platform that connects exceptional recruiters with talented professionals through intelligent matching and intuitive experiences.
+                        </p>
+                        <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                            <button class="sk-dark-blue hover:bg-gray-800 text-white font-medium py-3 px-8 rounded-lg text-lg" data-page="page-signup" data-role="recruiter">
+                                Join as Recruiter
+                            </button>
+                            <button class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-8 rounded-lg text-lg" data-page="page-signup" data-role="job_seeker">
+                                Join as Job Seeker
+                            </button>
+                        </div>
+                    </div>
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center mt-20">
+                        <p class="text-sm text-gray-500 uppercase tracking-wider">TRUSTED BY LEADING COMPANIES WORLDWIDE</p>
+                        <div class="mt-6 flex justify-center items-center gap-8 md:gap-12 flex-wrap">
+                            <span class="text-2xl font-medium text-gray-400">Microsoft</span>
+                            <span class="text-2xl font-medium text-gray-400">Airbnb</span>
+                            <span class="text-2xl font-medium text-gray-400">Google</span>
+                            <span class="text-2xl font-medium text-gray-400">Adobe</span>
+                            <span class="text-2xl font-medium text-gray-400">Amazon</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How It Works Section (from 133602) -->
+                <section id="how-it-works" class="py-20 sm:py-28">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl md:text-4xl font-bold text-center sk-dark-blue-text">How it works</h2>
+                        <p class="text-center text-lg text-gray-600 mt-4">Find talent and opportunities in three easy steps</p>
+                        <div class="mt-16 grid md:grid-cols-3 gap-8">
+                            <!-- Card 1: Connect -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-6">
+                                    <i data-lucide="users" class="w-8 h-8 text-indigo-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">Connect</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Build your professional profile and connect with recruiters or job seekers in your industry.
+                                </p>
+                            </div>
+                            <!-- Card 2: Match -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-6">
+                                    <i data-lucide="target" class="w-8 h-8 text-indigo-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">Match</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Get matched with opportunities that align with your skills and career goals through our smart algorithm.
+                                </p>
+                            </div>
+                            <!-- Card 3: Hire -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-6">
+                                    <i data-lucide="briefcase" class="w-8 h-8 text-indigo-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">Hire</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Interview top candidates and make offers with confidence using our streamlined hiring process.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Browse by Category Section (from 133519) -->
+                <section class="bg-white py-20 sm:py-28">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl md:text-4xl font-bold text-center sk-dark-blue-text">Browse by Category</h2>
+                        <p class="text-center text-lg text-gray-600 mt-4">Explore services across multiple categories</p>
+                        <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <!-- Category Cards -->
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="code" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Web Development</h3>
+                                <p class="mt-1 text-gray-500">5,234 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="smartphone" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Mobile Development</h3>
+                                <p class="mt-1 text-gray-500">3,421 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="pen-tool" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Design & Creative</h3>
+                                <p class="mt-1 text-gray-500">6,789 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="edit-3" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Writing & Translation</h3>
+                                <p class="mt-1 text-gray-500">4,567 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="megaphone" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Digital Marketing</h3>
+                                <p class="mt-1 text-gray-500">2,890 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="video" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Video & Animation</h3>
+                                <p class="mt-1 text-gray-500">1,234 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="database" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Data Science</h3>
+                                <p class="mt-1 text-gray-500">3,456 jobs available</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+                                <i data-lucide="trending-up" class="w-10 h-10 text-indigo-600 mx-auto"></i>
+                                <h3 class="mt-4 text-lg font-semibold sk-dark-blue-text">Business Consulting</h3>
+                                <p class="mt-1 text-gray-500">1,890 jobs available</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Why Choose Section (from 133623) -->
+                <section class="py-20 sm:py-28">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl md:text-4xl font-bold text-center sk-dark-blue-text">Why Choose SkillYatra?</h2>
+                        <p class="text-center text-lg text-gray-600 mt-4">The best platform for freelancers and clients</p>
+                        <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <!-- Feature Card 1 -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-5">
+                                    <i data-lucide="shield-check" class="w-7 h-7 text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">Secure Payments</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Your money is safe with our secure payment system. Only pay when you're 100% satisfied.
+                                </p>
+                            </div>
+                            <!-- Feature Card 2 -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-5">
+                                    <i data-lucide="users" class="w-7 h-7 text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">Quality Talent</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Access to millions of skilled professionals across 2700+ categories worldwide.
+                                </p>
+                            </div>
+                            <!-- Feature Card 3 -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-5">
+                                    <i data-lucide="clock" class="w-7 h-7 text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">Fast Turnaround</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Get quick responses and fast project completion. 80% of jobs receive bids within 60 seconds.
+                                </p>
+                            </div>
+                            <!-- Feature Card 4 -->
+                            <div class="bg-white p-8 rounded-xl shadow-lg">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-5">
+                                    <i data-lucide="headphones" class="w-7 h-7 text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold sk-dark-blue-text">24/7 Support</h3>
+                                <p class="mt-2 text-gray-600">
+                                    Our support team is always here to help you succeed, any time of the day or night.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Footer (from 133658) -->
+            <footer class="sk-dark-blue text-gray-300">
+                <!-- CTA Section -->
+                <div class="py-20 border-b border-gray-700">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <h2 class="text-3xl md:text-4xl font-bold text-white">Start hiring or get hired today</h2>
+                        <p class="text-lg text-gray-400 mt-4">Join thousands of professionals connecting through our platform</p>
+                        <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                            <button class="bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-8 rounded-lg text-lg" data-page="page-signup">
+                                Get Started
+                            </button>
+                            <button class="bg-transparent border border-gray-500 hover:bg-gray-700 text-white font-medium py-3 px-8 rounded-lg text-lg">
+                                Learn More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Footer Links -->
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-16 grid md:grid-cols-5 gap-8">
+                    <div class="md:col-span-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="briefcase" class="text-white"></i>
+                            <span class="font-bold text-xl text-white">SkillYatra</span>
+                        </div>
+                        <p class="mt-4 text-gray-400">
+                            Connecting talent with opportunity. Your journey to success starts here.
+                        </p>
+                        <div class="flex gap-4 mt-6">
+                            <a href="#" class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="facebook" class="w-5 h-5"></i>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="twitter" class="w-5 h-5"></i>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="linkedin" class="w-5 h-5"></i>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="instagram" class="w-5 h-5"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-white uppercase tracking-wider">For Clients</h4>
+                        <ul class="mt-4 space-y-3">
+                            <li><a href="#" class="text-gray-400 hover:text-white">Find Freelancers</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Post a Job</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">How to Hire</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Enterprise</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-white uppercase tracking-wider">For Freelancers</h4>
+                        <ul class="mt-4 space-y-3">
+                            <li><a href="#" class="text-gray-400 hover:text-white">Find Jobs</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">How to Find Work</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Success Stories</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Resources</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-white uppercase tracking-wider">Company</h4>
+                        <ul class="mt-4 space-y-3">
+                            <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Help & Support</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Trust & Safety</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white">Contact Us</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Copyright Bar -->
+                <div class="bg-gray-900 py-6">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
+                        <p>&copy; 2025 SkillYatra. All rights reserved.</p>
+                        <div class="flex gap-6 mt-4 sm:mt-0">
+                            <a href="#" class="hover:text-white">Terms of Service</a>
+                            <a href="#" class="hover:text-white">Privacy Policy</a>
+                            <a href="#" class="hover:text-white">Cookie Policy</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+
+        </div> <!-- End Page 1: Landing Page -->
+
+        <!-- 
+          ======================================================================
+          PAGE 2: LOGIN PAGE (New)
+          ======================================================================
+        -->
+        <div id="page-login" class="page">
+            <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-2 mb-8 cursor-pointer" data-page="page-landing">
+                    <i data-lucide="briefcase" class="h-8 w-8 text-indigo-600"></i>
+                    <span class="font-bold text-3xl sk-dark-blue-text">SkillYatra</span>
+                </div>
+                <div class="max-w-md w-full bg-white p-8 sm:p-10 rounded-xl shadow-lg border border-gray-200">
+                    <h2 class="text-3xl font-bold text-center sk-dark-blue-text">Welcome back</h2>
+                    <p class="text-center text-gray-600 mt-2">Sign in to continue to your account.</p>
+                    <form id="login-form" class="mt-8 space-y-6">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input id="login-email" name="email" type="email" autocomplete="email" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                            <input id="login-password" name="password" type="password" autocomplete="current-password" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="remember-me" name="remember-me" type="checkbox"
+                                    class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-900">Remember me</label>
+                            </div>
+                            <div class="text-sm">
+                                <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">Forgot your password?</a>
+                            </div>
+                        </div>
+                        <div>
+                            <button type="submit"
+                                class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white sk-dark-blue hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
+                                Sign In
+                            </button>
+                        </div>
+                    </form>
+                    <p class="mt-6 text-center text-sm text-gray-600">
+                        Don't have an account?
+                        <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500" data-page="page-signup">
+                            Sign Up
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div> <!-- End Page: Login -->
+
+        <!-- 
+          ======================================================================
+          PAGE 3: SIGN UP PAGE (New)
+          ======================================================================
+        -->
+        <div id="page-signup" class="page">
+            <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-2 mb-8 cursor-pointer" data-page="page-landing">
+                    <i data-lucide="briefcase" class="h-8 w-8 text-indigo-600"></i>
+                    <span class="font-bold text-3xl sk-dark-blue-text">SkillYatra</span>
+                </div>
+                <div class="max-w-md w-full bg-white p-8 sm:p-10 rounded-xl shadow-lg border border-gray-200">
+                    <h2 class="text-3xl font-bold text-center sk-dark-blue-text">Create your account</h2>
+                    <p class="text-center text-gray-600 mt-2">Join the top platform for freelancers and clients.</p>
+                    <form id="signup-form" class="mt-8 space-y-6">
+                        <div>
+                            <label for="signup-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input id="signup-name" name="name" type="text" autocomplete="name" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="signup-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input id="signup-email" name="email" type="email" autocomplete="email" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</Glabell>
+                            <input id="signup-password" name="password" type="password" autocomplete="new-password" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+
+                        <!-- Custom Radio Button Group -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">I am a...</label>
+                            <div class="mt-2 grid grid-cols-2 gap-4">
+                                <!-- Job Seeker Option -->
+                                <div class="relative">
+                                    <input type="radio" id="role-job-seeker" name="role" value="job_seeker" class="hidden sk-radio-input" checked>
+                                    <label for="role-job-seeker" class="sk-radio-label flex items-center p-4 rounded-lg cursor-pointer">
+                                        <span class="sk-radio-circle mr-3"></span>
+                                        <span class="font-medium text-gray-900">Job Seeker</span>
+                                    </label>
+                                </div>
+                                <!-- Recruiter Option -->
+                                <div class="relative">
+                                    <input type="radio" id="role-recruiter" name="role" value="recruiter" class="hidden sk-radio-input">
+                                    <label for="role-recruiter" class="sk-radio-label flex items-center p-4 rounded-lg cursor-pointer">
+                                        <span class="sk-radio-circle mr-3"></span>
+                                        <span class="font-medium text-gray-900">Recruiter</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <button type="submit"
+                                class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white sk-dark-blue hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
+                                Create Account
+                            </button>
+                        </div>
+                    </form>
+                    <p class="mt-6 text-center text-sm text-gray-600">
+                        Already have an account?
+                        <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500" data-page="page-login">
+                            Sign In
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div> <!-- End Page: Sign Up -->
+        
+
+        <!-- 
+          ======================================================================
+          PAGE 4: FREELANCER DASHBOARD (formerly Page 5)
+          Based on screenshot: 132350
+          ======================================================================
+        -->
+        <div id="page-dashboard-freelancer" class="page">
+            
+            <!-- Dashboard Header (Copied from feed) -->
+            <header class="bg-white shadow-sm sticky top-0 z-10">
+                <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                    <!-- Left: Logo & Search -->
+                    <div class="flex items-center gap-4 flex-grow">
+                        <div class="flex items-center gap-2 cursor-pointer" data-page="page-dashboard-feed">
+                            <i data-lucide="briefcase" class="text-indigo-600"></i>
+                            <span class="font-bold text-xl sk-dark-blue-text hidden sm:inline">SkillYatra</span>
+                        </div>
+                        <div class="relative w-full max-w-xs">
+                            <input type="text" placeholder="Search jobs, freelancers, or compan..." class="w-full bg-gray-100 border-none rounded-lg py-2 px-4 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                            <i data-lucide="search" class="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Nav Icons & Profile -->
+                    <div class="flex items-center gap-6">
+                        <a href="#" class="flex flex-col items-center text-gray-600 hover:text-indigo-600" data-page="page-dashboard-feed">
+                            <i data-lucide="home" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Home</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">3</span>
+                            <i data-lucide="briefcase" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Jobs</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">5</span>
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Notifications</span>
+                        </a>
+                        
+                        <!-- Logged Out -->
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-lg logged-out" data-page="page-login">
+                            Sign In
+                        </button>
+
+                        <!-- User Dropdown (Logged In) -->
+                        <div class="relative logged-in-flex items-center gap-2">
+                            <button class="flex items-center gap-1 text-gray-700" data-page="page-dashboard-freelancer">
+                                <img id="user-avatar-1" src="https://placehold.co/32x32/E0E7FF/4F46E5?text=MP" alt="User" class="w-8 h-8 rounded-full">
+                                <div class="hidden md:flex items-center">
+                                    <span class="text-sm">Profile</span>
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </button>
+                            <button id="sign-out-2" class="text-gray-600 hover:text-indigo-600 ml-2">Sign Out</button>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+            
+            <!-- Dashboard Content -->
+            <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                
+                <!-- Profile Completion Card -->
+                <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                    <div classs="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-semibold sk-dark-blue-text">Profile Completion</h3>
+                        <span id="completion-percent-1" class="text-lg font-bold text-indigo-600">0%</span>
+                    </div>
+                    <div class="progress-bar-bg mt-2">
+                        <div id="completion-bar-1" class="progress-bar-fg" style="width: 0%;"></div>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">Complete your profile to get more job offers.</p>
+                </div>
+                
+                <h1 class="text-3xl font-bold sk-dark-blue-text">Dashboard</h1>
+                <p class="text-gray-600 mt-1">Welcome back! Here's your overview</p>
+                
+                <!-- Stats Grid -->
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Card 1: Active Jobs -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center sk-icon-bg-blue">
+                            <i data-lucide="briefcase" class="w-7 h-7"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500 uppercase">ACTIVE JOBS</span>
+                            <p class="text-3xl font-bold sk-dark-blue-text">3</p>
+                        </div>
+                    </div>
+                    <!-- Card 2: Completed -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center sk-icon-bg-green">
+                            <i data-lucide="check-circle" class="w-7 h-7"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500 uppercase">COMPLETED</span>
+                            <p class="text-3xl font-bold sk-dark-blue-text">0</p>
+                        </div>
+                    </div>
+                    <!-- Card 3: Total Bids -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center sk-icon-bg-yellow">
+                            <i data-lucide="gavel" class="w-7 h-7"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500 uppercase">TOTAL BIDS</span>
+                            <p class="text-3xl font-bold sk-dark-blue-text">12</p>
+                        </div>
+                    </div>
+                    <!-- Card 4: Total Earnings -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center sk-icon-bg-red">
+                            <i data-lucide="dollar-sign" class="w-7 h-7"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500 uppercase">TOTAL EARNINGS</span>
+                            <p class="text-3xl font-bold sk-dark-blue-text">$0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-10 bg-white p-8 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold sk-dark-blue-text">Quick Actions</h2>
+                    <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                        <button class="sk-dark-blue hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-2">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                            Post a Job
+                        </button>
+                    </div>
+                    <div class="mt-6">
+                        <div class="relative">
+                            <input type="text" placeholder="Browse Jobs" class="w-full border border-gray-300 rounded-lg py-3 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                            <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+        </div> <!-- End Page 4: Freelancer Dashboard -->
+
+
+        <!-- 
+          ======================================================================
+          PAGE 5: USER FEED DASHBOARD (formerly Page 6)
+          Based on screenshot: 132306, dash.png, and index page.jpg
+          ======================================================================
+        -->
+        <div id="page-dashboard-feed" class="page">
+
+            <!-- Feed Dashboard Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-10">
+                <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                    <!-- Left: Logo & Search -->
+                    <div class="flex items-center gap-4 flex-grow">
+                        <div class="flex items-center gap-2 cursor-pointer" data-page="page-dashboard-feed">
+                            <i data-lucide="briefcase" class="text-indigo-600"></i>
+                            <span class="font-bold text-xl sk-dark-blue-text hidden sm:inline">SkillYatra</span>
+                        </div>
+                        <div class="relative w-full max-w-xs">
+                            <input type="text" placeholder="Search jobs, freelancers, or compan..." class="w-full bg-gray-100 border-none rounded-lg py-2 px-4 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                            <i data-lucide="search" class="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Nav Icons & Profile -->
+                    <div class="flex items-center gap-6">
+                        <a href="#" class="flex flex-col items-center text-gray-600 hover:text-indigo-600" data-page="page-dashboard-feed">
+                            <i data-lucide="home" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Home</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">3</span>
+                            <i data-lucide="briefcase" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Jobs</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">5</span>
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Notifications</span>
+                        </a>
+                        
+                        <!-- Logged Out -->
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-lg logged-out" data-page="page-login">
+                            Sign In
+                        </button>
+
+                        <!-- User Dropdown (Logged In) -->
+                        <div class="relative logged-in-flex items-center gap-2">
+                            <button class="flex items-center gap-1 text-gray-700" data-page="page-dashboard-freelancer">
+                                <img id="user-avatar-2" src="https://placehold.co/32x32/E0E7FF/4F46E5?text=MP" alt="User" class="w-8 h-8 rounded-full">
+                                <div class="hidden md:flex items-center">
+                                    <span class="text-sm">Profile</span>
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </button>
+                            <button id="sign-out-3" class="text-gray-600 hover:text-indigo-600 ml-2">Sign Out</button>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+
+            <!-- Feed Content -->
+            <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                
+                <!-- Left Sidebar (Profile) - As per sketch -->
+                <aside class="hidden lg:block lg:col-span-1 space-y-6">
+                    <!-- Profile Card -->
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="h-16 bg-gray-200"></div>
+                        <div class="p-6 text-center -mt-10">
+                            <img id="user-avatar-3" src="https://placehold.co/80x80/E0E7FF/4F46E5?text=MP" alt="Profile" class="w-20 h-20 rounded-full mx-auto border-4 border-white">
+                            <h3 id="user-name-2" class="mt-3 text-lg font-semibold sk-dark-blue-text">Manish Pandit</h3>
+                            <p id="user-title-1" class="text-sm text-gray-500">Professional Title</p>
+                        </div>
+                    </div>
+
+                    <!-- Details Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 space-y-4">
+                        <h4 class="font-semibold text-gray-800">Details</h4>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>Education</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>Skills</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>About Skill</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                    </div>
+                    
+                    <!-- Score Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 space-y-4">
+                        <h4 class="font-semibold text-gray-800">Score Card</h4>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600"><span>Reviews</span> <span class="font-medium text-indigo-600">12</span></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600"><span>Task Done</span> <span class="font-medium text-indigo-600">8</span></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600"><span>Rating</span> <span class="font-medium text-indigo-600">4.8/5</span></a>
+                    </div>
+
+                    <!-- Personal Details Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 space-y-4">
+                        <h4 class="font-semibold text-gray-800">Personal Details</h4>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>Bank ID</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>Mobile Number</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>G-mail</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" class="flex justify-between items-center text-sm text-gray-600 hover:text-indigo-600" data-page="page-edit-profile"><span>Government ID</span> <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                    </div>
+
+                    <!-- Setting Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <a href="#" class="flex items-center gap-2 text-gray-600 hover:text-indigo-600" data-page="page-edit-profile">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                            <span class="font-medium">Setting</span>
+                        </a>
+                    </div>
+                </aside>
+                
+                <!-- Main Content (Feed) - As per sketch -->
+                <section class="lg:col-span-2 space-y-6">
+
+                    <!-- Feed Item 1 (Original) -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <!-- Post Header -->
+                        <div class="p-5 flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <img src="https://placehold.co/48x48/D1FAE5/10B981?text=JD" alt="User" class="w-12 h-12 rounded-full">
+                                <div>
+                                    <h4 class="font-semibold sk-dark-blue-text">John Developer</h4>
+                                    <p class="text-sm text-gray-500">Senior Web Developer</p>
+                                    <p class="text-xs text-gray-400">2h ago</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Post Meta -->
+                        <div class="px-5 pb-4 border-b border-gray-100">
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Payment Verified
+                                </span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="shield" class="w-3 h-3"></i>
+                                    Trust
+                                </span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-gray-600 my-3">
+                                <span><strong>Time duration:</strong> 2 Months</span>
+                                <span><strong>Offer:</strong> $2,000</span>
+                            </div>
+                        </div>
+
+                        <!-- Post Body -->
+                        <div class="px-5 pt-4 pb-4">
+                            <p class="text-gray-700 mb-4">
+                                About Post or Description: <span class="font-medium text-indigo-600">#WebDevelopment</span> <span class="font-medium text-indigo-600">#ReactJS</span> <span class="font-medium text-indigo-600">#Hiring</span>
+                            </p>
+                            
+                            <!-- Block of post (Text Fallback) -->
+                            <div class="mt-4 bg-gray-100 border border-gray-200 rounded-lg p-6 text-center">
+                                <p class="text-gray-700 font-medium">Looking for experienced React developers for a long-term project.</p>
+                                <p class="text-gray-600 mt-2">This is the text poster fallback as requested. Great opportunity for remote work!</p>
+                            </div>
+                        </div>
+
+                        <!-- Post Stats -->
+                        <div class="px-5 pb-4 text-sm text-gray-500">
+                            <span>24 comments</span>
+                            <span>&middot;</span>
+                            <span>8 shares</span>
+                        </div>
+                        
+                        <!-- Post Actions -->
+                        <div class="flex justify-around border-t border-gray-100 mx-5">
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Like</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Comment</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3" data-page="page-apply">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Apply</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Item 2 (New) -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <!-- Post Header -->
+                        <div class="p-5 flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <img src="https://placehold.co/48x48/FFE4E6/DC2626?text=AD" alt="User" class="w-12 h-12 rounded-full">
+                                <div>
+                                    <h4 class="font-semibold sk-dark-blue-text">Alice Designer</h4>
+                                    <p class="text-sm text-gray-500">UI/UX Lead</p>
+                                    <p class="text-xs text-gray-400">5h ago</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <!-- Post Meta -->
+                        <div class="px-5 pb-4 border-b border-gray-100">
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Payment Verified
+                                </span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-gray-600 my-3">
+                                <span><strong>Time duration:</strong> 1 Month</span>
+                                <span><strong>Offer:</strong> $1,500</span>
+                            </div>
+                        </div>
+                        <!-- Post Body -->
+                        <div class="px-5 pt-4 pb-4">
+                            <p class="text-gray-700 mb-4">
+                                Need a creative designer for a mobile app redesign. <span class="font-medium text-indigo-600">#UIUX</span> <span class="font-medium text-indigo-600">#Figma</span> <span class="font-medium text-indigo-600">#Design</span>
+                            </p>
+                            <div class="mt-4 bg-gray-100 border border-gray-200 rounded-lg p-6 text-center">
+                                <p class="text-gray-700 font-medium">We are rebranding our finance app and need a fresh, modern look.</p>
+                                <p class="text-gray-600 mt-2">Portfolio required.</p>
+                            </div>
+                        </div>
+                        <!-- Post Stats -->
+                        <div class="px-5 pb-4 text-sm text-gray-500">
+                            <span>45 comments</span>
+                            <span>&middot;</span>
+                            <span>12 shares</span>
+                        </div>
+                        <!-- Post Actions -->
+                        <div class="flex justify-around border-t border-gray-100 mx-5">
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Like</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Comment</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3" data-page="page-apply">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Apply</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Feed Item 3 (New) -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <!-- Post Header -->
+                        <div class="p-5 flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <img src="https://placehold.co/48x48/E0E7FF/4338CA?text=RM" alt="User" class="w-12 h-12 rounded-full">
+                                <div>
+                                    <h4 class="font-semibold sk-dark-blue-text">Robert Manager</h4>
+                                    <p class="text-sm text-gray-500">Project Manager at TechCorp</p>
+                                    <p class="text-xs text-gray-400">1 day ago</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <!-- Post Meta -->
+                        <div class="px-5 pb-4 border-b border-gray-100">
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Payment Verified
+                                </span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="shield" class="w-3 h-3"></i>
+                                    Trust
+                                </span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-gray-600 my-3">
+                                <span><strong>Time duration:</strong> 6 Months (Contract)</span>
+                                <span><strong>Offer:</strong> $5,000 / month</span>
+                            </div>
+                        </div>
+                        <!-- Post Body -->
+                        <div class="px-5 pt-4 pb-4">
+                            <p class="text-gray-700 mb-4">
+                                Hiring a Python/Django developer for a large-scale data analytics platform.
+                                <span class="font-medium text-indigo-600">#Python</span> <span class="font-medium text-indigo-600">#Django</span> <span class="font-medium text-indigo-600">#Backend</span>
+                            </p>
+                            <div class="mt-4 bg-gray-100 border border-gray-200 rounded-lg p-6 text-center">
+                                <p class="text-gray-700 font-medium">Must have 5+ years of experience with Django and REST APIs.</p>
+                                <p class="text-gray-600 mt-2">Experience with Pandas and AWS is a huge plus.</p>
+                            </div>
+                        </div>
+                        <!-- Post Stats -->
+                        <div class="px-5 pb-4 text-sm text-gray-500">
+                            <span>102 comments</span>
+                            <span>&middot;</span>
+                            <span>34 shares</span>
+                        </div>
+                        <!-- Post Actions -->
+                        <div class="flex justify-around border-t border-gray-100 mx-5">
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Like</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Comment</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3" data-page="page-apply">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Apply</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Item 4 (New) -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <!-- Post Header -->
+                        <div class="p-5 flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <img src="https://placehold.co/48x48/FFF7ED/F97316?text=SW" alt="User" class="w-12 h-12 rounded-full">
+                                <div>
+                                    <h4 class="font-semibold sk-dark-blue-text">Sarah Writer</h4>
+                                    <p class="text-sm text-gray-500">Content Strategist</p>
+                                    <p class="text-xs text-gray-400">2 days ago</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <!-- Post Meta -->
+                        <div class="px-5 pb-4 border-b border-gray-100">
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                    Payment Not Verified
+                                </span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="shield" class="w-3 h-3"></i>
+                                    Trust
+                                </span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-gray-600 my-3">
+                                <span><strong>Time duration:</strong> Ongoing</span>
+                                <span><strong>Offer:</strong> $50 per article</span>
+                            </div>
+                        </div>
+                        <!-- Post Body -->
+                        <div class="px-5 pt-4 pb-4">
+                            <p class="text-gray-700 mb-4">
+                                Looking for freelance writers for our tech blog.
+                                <span class="font-medium text-indigo-600">#Writing</span> <span class="font-medium text-indigo-600">#Content</span> <span class="font-medium text-indigo-600">#SEO</span>
+                            </p>
+                            <div class="mt-4 bg-gray-100 border border-gray-200 rounded-lg p-6 text-center">
+                                <p class="text-gray-700 font-medium">Seeking writers familiar with AI and SaaS topics.</p>
+                                <p class="text-gray-600 mt-2">Please send 2-3 writing samples.</p>
+                            </div>
+                        </div>
+                        <!-- Post Stats -->
+                        <div class="px-5 pb-4 text-sm text-gray-500">
+                            <span>31 comments</span>
+                            <span>&middot;</span>
+                            <span>5 shares</span>
+                        </div>
+                        <!-- Post Actions -->
+                        <div class="flex justify-around border-t border-gray-100 mx-5">
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Like</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Comment</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3" data-page="page-apply">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Apply</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Item 5 (New) -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <!-- Post Header -->
+                        <div class="p-5 flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <img src="https://placehold.co/48x48/F3E8FF/A855F7?text=MD" alt="User" class="w-12 h-12 rounded-full">
+                                <div>
+                                    <h4 class="font-semibold sk-dark-blue-text">Mike Data</h4>
+                                    <p class="text-sm text-gray-500">Data Scientist</p>
+                                    <p class="text-xs text-gray-400">3 days ago</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <!-- Post Meta -->
+                        <div class="px-5 pb-4 border-b border-gray-100">
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Payment Verified
+                                </span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="shield" class="w-3 h-3"></i>
+                                    Trust
+                                </span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-gray-600 my-3">
+                                <span><strong>Time duration:</strong> 3 Weeks</span>
+                                <span><strong>Offer:</strong> $3,000</span>
+                            </div>
+                        </div>
+                        <!-- Post Body -->
+                        <div class="px-5 pt-4 pb-4">
+                            <p class="text-gray-700 mb-4">
+                                Short-term project: Need help building a predictive model for customer churn.
+                                <span class="font-medium text-indigo-600">#DataScience</span> <span class="font-medium text-indigo-600">#MachineLearning</span>
+                            </p>
+                            <div class="mt-4 bg-gray-100 border border-gray-200 rounded-lg p-6 text-center">
+                                <p class="text-gray-700 font-medium">Dataset is cleaned and ready. Need an expert in scikit-learn.</p>
+                            </div>
+                        </div>
+                        <!-- Post Stats -->
+                        <div class="px-5 pb-4 text-sm text-gray-500">
+                            <span>18 comments</span>
+                            <span>&middot;</span>
+                            <span>2 shares</span>
+                        </div>
+                        <!-- Post Actions -->
+                        <div class="flex justify-around border-t border-gray-100 mx-5">
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Like</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Comment</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3" data-page="page-apply">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Apply</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Item 6 (New) -->
+                    <div class="bg-white rounded-xl shadow-lg">
+                        <!-- Post Header -->
+                        <div class="p-5 flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <img src="https://placehold.co/48x48/ECFCCB/4D7C0F?text=CS" alt="User" class="w-12 h-12 rounded-full">
+                                <div>
+                                    <h4 class="font-semibold sk-dark-blue-text">Cloud Services Inc.</h4>
+                                    <p class="text-sm text-gray-500">Recruiting Team</p>
+                                    <p class="text-xs text-gray-400">3 days ago</p>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <!-- Post Meta -->
+                        <div class="px-5 pb-4 border-b border-gray-100">
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                                    Payment Verified
+                                </span>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                    <i data-lucide="shield" class="w-3 h-3"></i>
+                                    Trust
+                                </span>
+                            </div>
+                            <div class="flex gap-6 text-sm text-gray-600 my-3">
+                                <span><strong>Time duration:</strong> Full-time</span>
+                                <span><strong>Offer:</strong> $120,000 / year</span>
+                            </div>
+                        </div>
+                        <!-- Post Body -->
+                        <div class="px-5 pt-4 pb-4">
+                            <p class="text-gray-700 mb-4">
+                                We are hiring a remote DevOps Engineer.
+                                <span class="font-medium text-indigo-600">#DevOps</span> <span class="font-medium text-indigo-600">#AWS</span> <span class="font-medium text-indigo-600">#Kubernetes</span>
+                            </p>
+                            <div class="mt-4 bg-gray-100 border border-gray-200 rounded-lg p-6 text-center">
+                                <p class="text-gray-700 font-medium">Full-time remote position for US candidates. Must be proficient with CI/CD pipelines.</p>
+                            </div>
+                        </div>
+                        <!-- Post Stats -->
+                        <div class="px-5 pb-4 text-sm text-gray-500">
+                            <span>215 comments</span>
+                            <span>&middot;</span>
+                            <span>88 shares</span>
+                        </div>
+                        <!-- Post Actions -->
+                        <div class="flex justify-around border-t border-gray-100 mx-5">
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="thumbs-up" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Like</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="message-square" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Comment</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                            <button class="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-3" data-page="page-apply">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Apply</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                </section>
+                
+            </main>
+
+        </div> <!-- End Page 5: User Feed Dashboard -->
+
+        <!-- 
+          ======================================================================
+          PAGE 6: APPLY FOR JOB PAGE (New)
+          Based on screenshot: apply.jpg
+          ======================================================================
+        -->
+        <div id="page-apply" class="page">
+            
+            <!-- Feed Dashboard Header (Same as feed page) -->
+            <header class="bg-white shadow-sm sticky top-0 z-10">
+                <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                    <!-- Left: Logo & Search -->
+                    <div class="flex items-center gap-4 flex-grow">
+                        <div class="flex items-center gap-2 cursor-pointer" data-page="page-dashboard-feed">
+                            <i data-lucide="briefcase" class="text-indigo-600"></i>
+                            <span class="font-bold text-xl sk-dark-blue-text hidden sm:inline">SkillYatra</span>
+                        </div>
+                        <div class="relative w-full max-w-xs">
+                            <input type="text" placeholder="Search jobs, freelancers, or compan..." class="w-full bg-gray-100 border-none rounded-lg py-2 px-4 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                            <i data-lucide="search" class="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Nav Icons & Profile -->
+                    <div class="flex items-center gap-6">
+                        <a href="#" class="flex flex-col items-center text-gray-600 hover:text-indigo-600" data-page="page-dashboard-feed">
+                            <i data-lucide="home" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Home</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">3</span>
+                            <i data-lucide="briefcase" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Jobs</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">5</span>
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Notifications</span>
+                        </a>
+
+                        <!-- User Dropdown (Logged In) -->
+                        <div class="relative logged-in-flex items-center gap-2">
+                            <button class="flex items-center gap-1 text-gray-700" data-page="page-dashboard-freelancer">
+                                <img id="user-avatar-4" src="https://placehold.co/32x32/E0E7FF/4F46E5?text=MP" alt="User" class="w-8 h-8 rounded-full">
+                                <div class="hidden md:flex items-center">
+                                    <span class="text-sm">Profile</span>
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </button>
+                            <button id="sign-out-4" class="text-gray-600 hover:text-indigo-600 ml-2">Sign Out</button>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+
+            <!-- Apply Form Content -->
+            <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div class="max-w-2xl mx-auto bg-white p-8 sm:p-10 rounded-xl shadow-lg border border-gray-200">
+                    <h2 class="text-3xl font-bold text-center sk-dark-blue-text">Apply for Job</h2>
+                    <p class="text-center text-gray-600 mt-2">Submit your application for "React Developer"</p>
+                    
+                    <form id="apply-form" class="mt-8 space-y-6">
+                        <!-- Name -->
+                        <div>
+                            <label for="apply-name" class="block text-sm font-medium text-gray-700">Name*</label>
+                            <input id="apply-name" name="name" type="text" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <!-- Gmail -->
+                        <div>
+                            <label for="apply-email" class="block text-sm font-medium text-gray-700">Gmail (Email)*</label>
+                            <input id="apply-email" name="email" type="email" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <!-- Mobile Number -->
+                        <div>
+                            <label for="apply-mobile" class="block text-sm font-medium text-gray-700">Mobile Number*</label>
+                            <input id="apply-mobile" name="mobile" type="tel" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <!-- Resume -->
+                        <div>
+                            <label for="apply-resume" class="block text-sm font-medium text-gray-700">Resume*</label>
+                            <input id="apply-resume" name="resume" type="file" required
+                                class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-lg file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-indigo-50 file:text-indigo-700
+                                hover:file:bg-indigo-100">
+                        </div>
+                        <!-- Time Required -->
+                        <div>
+                            <label for="apply-time" class="block text-sm font-medium text-gray-700">Time required to complete*</label>
+                            <input id="apply-time" name="time" type="text" placeholder="e.g., 2 Months" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <!-- Make Offer -->
+                        <div>
+                            <label for="apply-offer" class="block text-sm font-medium text-gray-700">Make Offer ($)*</label>
+                            <input id="apply-offer" name="offer" type="number" placeholder="e.g., 2000" required
+                                class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        
+                        <!-- Experience Level -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Experience Level*</label>
+                            <div class="mt-2 grid grid-cols-2 gap-4">
+                                <!-- Fresher Option -->
+                                <div class="relative">
+                                    <input type="radio" id="role-fresher" name="experience" value="fresher" class="hidden sk-radio-input" checked>
+                                    <label for="role-fresher" class="sk-radio-label flex items-center p-4 rounded-lg cursor-pointer">
+                                        <span class="sk-radio-circle mr-3"></span>
+                                        <span class="font-medium text-gray-900">Fresher</span>
+                                    </label>
+                                </div>
+                                <!-- Experienced Option -->
+                                <div class="relative">
+                                    <input type="radio" id="role-experienced" name="experience" value="experienced" class="hidden sk-radio-input">
+                                    <label for="role-experienced" class="sk-radio-label flex items-center p-4 rounded-lg cursor-pointer">
+                                        <span class="sk-radio-circle mr-3"></span>
+                                        <span class="font-medium text-gray-900">Experienced (Cash before)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div>
+                            <button type="submit"
+                                class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white sk-dark-blue hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
+                                Send Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div> <!-- End Page 6: Apply for Job -->
+        
+        <!-- 
+          ======================================================================
+          PAGE 7: EDIT PROFILE PAGE (New)
+          Based on screenshot: image_9daa54.png
+          ======================================================================
+        -->
+        <div id="page-edit-profile" class="page">
+            
+            <!-- Feed Dashboard Header (Same as feed page) -->
+            <header class="bg-white shadow-sm sticky top-0 z-10">
+                <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                    <!-- Left: Logo & Search -->
+                    <div class="flex items-center gap-4 flex-grow">
+                        <div class="flex items-center gap-2 cursor-pointer" data-page="page-dashboard-feed">
+                            <i data-lucide="briefcase" class="text-indigo-600"></i>
+                            <span class="font-bold text-xl sk-dark-blue-text hidden sm:inline">SkillYatra</span>
+                        </div>
+                        <div class="relative w-full max-w-xs">
+                            <input type="text" placeholder="Search jobs, freelancers, or compan..." class="w-full bg-gray-100 border-none rounded-lg py-2 px-4 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                            <i data-lucide="search" class="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Nav Icons & Profile -->
+                    <div class="flex items-center gap-6">
+                        <a href="#" class="flex flex-col items-center text-gray-600 hover:text-indigo-600" data-page="page-dashboard-feed">
+                            <i data-lucide="home" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Home</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">3</span>
+                            <i data-lucide="briefcase" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Jobs</span>
+                        </a>
+                        <a href="#" class="relative flex flex-col items-center text-gray-600 hover:text-indigo-600">
+                            <span class="absolute -top-1 -right-1 sk-badge text-xs font-bold rounded-full px-1.5 py-0.5">5</span>
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="text-xs hidden sm:inline">Notifications</span>
+                        </a>
+
+                        <!-- User Dropdown (Logged In) -->
+                        <div class="relative logged-in-flex items-center gap-2">
+                            <button class="flex items-center gap-1 text-gray-700" data-page="page-dashboard-freelancer">
+                                <img id="user-avatar-5" src="https://placehold.co/32x32/E0E7FF/4F46E5?text=MP" alt="User" class="w-8 h-8 rounded-full">
+                                <div class="hidden md:flex items-center">
+                                    <span class="text-sm">Profile</span>
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </button>
+                            <button id="sign-out-5" class="text-gray-600 hover:text-indigo-600 ml-2">Sign Out</button>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+            
+            <!-- Edit Profile Content -->
+            <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    
+                    <!-- Profile Card -->
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div class="h-20 bg-gray-200"></div>
+                        <div class="p-6 text-center -mt-12">
+                            <img id="user-avatar-6" src="https://placehold.co/100x100/E0E7FF/4F46E5?text=MP" alt="Profile" class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg">
+                            <h3 id="user-name-3" class="mt-4 text-2xl font-semibold sk-dark-blue-text">Manish Pandit</h3>
+                            <p id="user-title-2" class="text-md text-gray-500">Professional Title</p>
+                        </div>
+                    </div>
+
+                    <!-- Profile Completion Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <div classs="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-semibold sk-dark-blue-text">Profile Completion</h3>
+                            <span id="completion-percent-2" class="text-lg font-bold text-indigo-600">0%</span>
+                        </div>
+                        <div class="progress-bar-bg mt-2">
+                            <div id="completion-bar-2" class="progress-bar-fg" style="width: 0%;"></div>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">Complete your profile to get more job offers.</p>
+                    </div>
+
+                    <form id="edit-profile-form">
+                        <!-- Details Card -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xl font-semibold text-gray-800">Details</h4>
+                                <button type="submit" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Save</button>
+                            </div>
+                            <div class="space-y-4 mt-4">
+                                <div>
+                                    <label for="edit-education" class="block text-sm font-medium text-gray-700">Education</label>
+                                    <input id="edit-education" name="education" type="text" placeholder="e.g., B.Tech in Computer Science"
+                                        class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label for="edit-skills" class="block text-sm font-medium text-gray-700">Skills</label>
+                                    <input id="edit-skills" name="skills" type="text" placeholder="e.g., React, Node.js, Python"
+                                        class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label for="edit-about" class="block text-sm font-medium text-gray-700">About Skill</label>
+                                    <textarea id="edit-about" name="about" rows="3" placeholder="Tell us about your skills..."
+                                        class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Score Card (View Only) -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-xl font-semibold text-gray-800 mb-4">Score Card</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-600">Reviews</span> 
+                                    <span class="font-medium text-indigo-600">12</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-600">Task Done</span> 
+                                    <span class="font-medium text-indigo-600">8</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-600">Rating</span> 
+                                    <span class="font-medium text-indigo-600">4.8/5</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Details Card -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xl font-semibold text-gray-800">Personal Details</h4>
+                                <button type="submit" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Save</button>
+                            </div>
+                            <div class="space-y-4 mt-4">
+                                <div>
+                                    <label for="edit-bank" class="block text-sm font-medium text-gray-700">Bank ID</label>
+                                    <input id="edit-bank" name="bankId" type="text" placeholder="Your Bank ID"
+                                        class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label for="edit-mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
+                                    <input id="edit-mobile" name="mobile" type="tel" placeholder="Your Mobile Number"
+                                        class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label for="edit-gov" class="block text-sm font-medium text-gray-700">Government ID</label>
+                                    <input id="edit-gov" name="govId" type="text" placeholder="Your Government ID"
+                                        class="mt-1 block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Setting Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <a href="#" class="flex items-center gap-2 text-gray-600 hover:text-indigo-600">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                            <span class="font-medium">Setting</span>
+                        </a>
+                    </div>
+                </div>
+            </main>
+        </div> <!-- End Page 7: Edit Profile -->
+
+
+    </div> <!-- End App Container -->
+    
+    <!-- AI Chat Button -->
+    <button id="ai-chat-button" title="Chat with AI">
+        <i data-lucide="message-circle" class="w-8 h-8"></i>
+    </button>
+
+    <!-- JavaScript for Page Navigation & Auth -->
+    <script>
+        // === GLOBAL STATE ===
+        const pages = document.querySelectorAll('.page');
+        const navLinks = document.querySelectorAll('[data-page]');
+        const errorToast = document.getElementById('error-toast');
+        const errorMessage = document.getElementById('error-message');
+        const successToast = document.getElementById('success-toast');
+        const successMessage = document.getElementById('success-message');
+        const protectedPages = [
+            'page-dashboard-freelancer', 
+            'page-dashboard-feed',
+            'page-apply',
+            'page-edit-profile' // Added new edit profile page
+        ];
+        
+        // Auth Forms
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const applyForm = document.getElementById('apply-form');
+        const editProfileForm = document.getElementById('edit-profile-form');
+        const signOutButtons = [
+            document.getElementById('sign-out-1'),
+            document.getElementById('sign-out-2'),
+            document.getElementById('sign-out-3'),
+            document.getElementById('sign-out-4'),
+            document.getElementById('sign-out-5') // Added new signout button
+        ];
+        
+        // AI Chat button
+        const aiChatButton = document.getElementById('ai-chat-button');
+
+        // === NOTIFICATION HANDLING ===
+        function showNotification(message, isError = true) {
+            if (isError) {
+                errorMessage.textContent = message;
+                errorToast.classList.remove('hidden');
+            } else {
+                successMessage.textContent = message;
+                successToast.classList.remove('hidden');
+            }
+            
+            setTimeout(() => {
+                errorToast.classList.add('hidden');
+                successToast.classList.add('hidden');
+            }, 5000);
+        }
+
+        // === PAGE NAVIGATION ===
+        function navigateTo(pageId, params = {}) {
+            const isLoggedIn = !!localStorage.getItem('currentUser');
+
+            // --- Smart Navigation Logic ---
+            // 1. If a logged-in user tries to go to the landing page, redirect to their feed
+            if (isLoggedIn && pageId === 'page-landing') {
+                pageId = 'page-dashboard-feed';
+            }
+            
+            // 2. If a logged-out user tries to access a protected page, redirect to login
+            if (!isLoggedIn && protectedPages.includes(pageId)) {
+                console.log('Access denied. User not logged in. Redirecting to login.');
+                pageId = 'page-login';
+            }
+            // --- End Smart Navigation ---
+
+            // Hide all pages
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Show the target page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                window.scrollTo(0, 0);
+                
+                const user = JSON.parse(localStorage.getItem('currentUser'));
+                
+                // Update user details on apply page if logged in
+                if (pageId === 'page-apply' && isLoggedIn) {
+                    document.getElementById('apply-name').value = user.name || '';
+                    document.getElementById('apply-email').value = user.email || '';
+                    document.getElementById('apply-mobile').value = user.mobile || '';
+                }
+                
+                // Update user details on edit profile page if logged in
+                if (pageId === 'page-edit-profile' && isLoggedIn) {
+                    document.getElementById('edit-education').value = user.education || '';
+                    document.getElementById('edit-skills').value = user.skills || '';
+                    document.getElementById('edit-about').value = user.about || '';
+                    document.getElementById('edit-bank').value = user.bankId || '';
+                    document.getElementById('edit-mobile').value = user.mobile || '';
+                    document.getElementById('edit-gov').value = user.govId || '';
+                }
+
+            } else {
+                console.warn(`Page not found: ${pageId}. Defaulting to feed or landing.`);
+                // Default to feed if logged in, landing if not
+                const defaultPage = isLoggedIn ? 'page-dashboard-feed' : 'page-landing';
+                document.getElementById(defaultPage).classList.add('active');
+            }
+
+            // Handle special params for signup role
+            if (pageId === 'page-signup' && params.role) {
+                const roleRadio = document.getElementById(`role-${params.role.replace('_', '-')}`);
+                if (roleRadio) {
+                    roleRadio.checked = true;
+                }
+            }
+        }
+
+        // Add click listeners to all nav links
+        // We re-query this on DOM load to include new buttons
+        function setupNavLinks() {
+             document.querySelectorAll('[data-page]').forEach(link => {
+                // Remove old listeners to prevent duplicates if this is called multiple times
+                link.replaceWith(link.cloneNode(true));
+            });
+            
+            // Add new listeners
+            document.querySelectorAll('[data-page]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.getAttribute('data-page');
+                    const role = link.getAttribute('data-role'); // For signup buttons
+                    
+                    if (pageId) {
+                        navigateTo(pageId, { role });
+                    }
+                });
+            });
+        }
+
+
+        // === AUTHENTICATION LOGIC (LocalStorage) ===
+
+        // Handle Sign Up
+        if (signupForm) {
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(signupForm);
+                const name = formData.get('name');
+                const email = formData.get('email');
+                const password = formData.get('password');
+                const role = formData.get('role'); // 'job_seeker' or 'recruiter'
+
+                // Get existing users or initialize empty array
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+
+                // Check if user already exists
+                if (users.find(user => user.email === email)) {
+                    showNotification('User with this email already exists.');
+                    return;
+                }
+
+                // Add new user
+                const newUser = { 
+                    id: Date.now().toString(), 
+                    name, 
+                    email, 
+                    password, 
+                    role, 
+                    title: 'Professional Title',
+                    // Add new empty fields for profile completion
+                    education: '',
+                    skills: '',
+                    about: '',
+                    bankId: '',
+                    mobile: '',
+                    govId: ''
+                };
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+
+                // Set current user session
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+
+                // Update UI and navigate
+                checkAuthStatus();
+                navigateTo('page-dashboard-feed'); // Go directly to feed
+            });
+        }
+
+        // Handle Login
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(loginForm);
+                const email = formData.get('email');
+                const password = formData.get('password');
+
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+                
+                // Find user
+                const foundUser = users.find(user => user.email === email && user.password === password);
+
+                if (foundUser) {
+                    // Set current user session
+                    localStorage.setItem('currentUser', JSON.stringify(foundUser));
+                    // Update UI and navigate
+                    checkAuthStatus();
+                    navigateTo('page-dashboard-feed'); // Go directly to feed
+                } else {
+                    showNotification('Invalid email or password.');
+                }
+            });
+        }
+        
+        // Handle Edit Profile Save
+        if (editProfileForm) {
+            editProfileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const user = JSON.parse(localStorage.getItem('currentUser'));
+                if (!user) {
+                    showNotification('You must be logged in to save.');
+                    return;
+                }
+                
+                const formData = new FormData(editProfileForm);
+                
+                // Update user object with new data
+                user.education = formData.get('education') || '';
+                user.skills = formData.get('skills') || '';
+                user.about = formData.get('about') || '';
+                user.bankId = formData.get('bankId') || '';
+                user.mobile = formData.get('mobile') || '';
+                user.govId = formData.get('govId') || '';
+                
+                // Save updated user to currentUser
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                
+                // Also update the main users list
+                let users = JSON.parse(localStorage.getItem('users')) || [];
+                users = users.map(u => u.id === user.id ? user : u);
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // Update UI (including completion bar)
+                checkAuthStatus();
+                showNotification('Profile updated successfully!', false);
+            });
+        }
+
+        // Handle Sign Out
+        signOutButtons.forEach(btn => {
+            if (btn) {
+                // Re-clone the button to remove old listeners if any, then add new one
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+
+                newBtn.addEventListener('click', () => {
+                    localStorage.removeItem('currentUser');
+                    checkAuthStatus();
+                    navigateTo('page-landing');
+                });
+            }
+        });
+        
+        // Handle Apply Form Submit
+        if (applyForm) {
+            applyForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                // In a real app, you'd send this data.
+                // For now, just show success and go back to feed.
+                showNotification("Application Submitted!", false);
+                navigateTo('page-dashboard-feed');
+            });
+        }
+
+        // Handle AI Chat Button Click
+        if (aiChatButton) {
+            aiChatButton.addEventListener('click', () => {
+                // In a real app, you would open a chat modal.
+                // For now, we just show a placeholder.
+                showNotification("AI Chat feature coming soon!");
+            });
+        }
+
+        // === AUTH STATE & UI UPDATES ===
+        
+        // Calculate profile completion
+        function calculateProfileCompletion(user) {
+            if (!user) return 0;
+            
+            const fields = [
+                user.title,
+                user.education,
+                user.skills,
+                user.about,
+                user.mobile,
+                user.govId
+            ];
+            
+            const totalFields = fields.length;
+            let completedFields = 0;
+            
+            fields.forEach(field => {
+                // Check if field is not null, not undefined, and not an empty string
+                // Also check if it's not the default title
+                if (field && field.trim() !== '' && field !== 'Professional Title') {
+                    completedFields++;
+                }
+            });
+            
+            return Math.round((completedFields / totalFields) * 100);
+        }
+
+        // Check auth status and update UI
+        function checkAuthStatus() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+
+            if (user) {
+                document.body.classList.add('is-authenticated');
+                updateUserUI(user);
+            } else {
+                document.body.classList.remove('is-authenticated');
+                updateUserUI(null); // Clear user-specific UI
+            }
+        }
+
+
+
+        // Update all user-specific UI elements
+        function updateUserUI(user) {
+            const name = user ? user.name : 'Profile';
+            const title = user ? (user.title || 'Professional Title') : 'Professional Title';
+            const initials = user ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '??';
+            const avatarUrl = `https://placehold.co/80x80/E0E7FF/4F46E5?text=${initials}`;
+            const completion = calculateProfileCompletion(user);
+
+            // Header 1 (Freelancer Dashboard)
+            document.getElementById('user-avatar-1').src = avatarUrl.replace('80x80', '32x32');
+            document.getElementById('user-name-1').textContent = name;
+            
+            // Header 2 (Feed Dashboard)
+            document.getElementById('user-avatar-2').src = avatarUrl.replace('80x80', '32x32');
+            
+            // Header 3 (Apply Page)
+            document.getElementById('user-avatar-4').src = avatarUrl.replace('80x80', '32x32');
+            
+            // Header 4 (Edit Profile Page)
+            document.getElementById('user-avatar-5').src = avatarUrl.replace('80x80', '32x32');
+
+            // Sidebar (Feed Dashboard)
+            document.getElementById('user-name-2').textContent = name;
+            document.getElementById('user-title-1').textContent = title;
+            document.getElementById('user-avatar-3').src = avatarUrl;
+            
+            // Edit Profile Page Main
+            document.getElementById('user-name-3').textContent = name;
+            document.getElementById('user-title-2').textContent = title;
+            document.getElementById('user-avatar-6').src = avatarUrl.replace('80x80', '100x100');
+
+            // Completion Bar 1 (Freelancer Dashboard)
+            document.getElementById('completion-percent-1').textContent = `${completion}%`;
+            document.getElementById('completion-bar-1').style.width = `${completion}%`;
+            
+            // Completion Bar 2 (Edit Profile Page)
+            document.getElementById('completion-percent-2').textContent = `${completion}%`;
+            document.getElementById('completion-bar-2').style.width = `${completion}%`;
+        }
+
+
+        // === INITIALIZATION ===
+        document.addEventListener('DOMContentLoaded', () => {
+            // Render all lucide icons
+            lucide.createIcons();
+            
+            // Setup nav links
+            setupNavLinks();
+
+            // Check auth status on load
+            checkAuthStatus();
+            
+            // Set initial page
+            const isLoggedIn = !!localStorage.getItem('currentUser');
+            const activePage = document.querySelector('.page.active');
+            
+            if (activePage && activePage.id === 'page-landing' && isLoggedIn) {
+                // If on landing page but logged in, navigate to feed
+                navigateTo('page-dashboard-feed');
+            } else if (!activePage) {
+                // If no page is active, set default based on auth
+                navigateTo(isLoggedIn ? 'page-dashboard-feed' : 'page-landing');
+            } else {
+                // If a specific page is active (e.g. login), just let it be
+                // but make sure to run auth check in case it's protected
+                navigateTo(activePage.id);
+            }
+        });
+    </script>
+
+</body>
+</html>
+
